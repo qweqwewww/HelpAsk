@@ -1,0 +1,153 @@
+@model HelpAsk.Models.Request
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Редактировать обращение";
+}
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/Employee"><i class="bi bi-question-circle me-2"></i>HelpAsk</a>
+        <div class="d-flex align-items-center">
+            <span class="text-white me-3">
+                <i class="bi bi-person-circle me-1"></i>
+                @Context.User.Identity?.Name
+            </span>
+            <a href="/Account/Logout" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Выйти
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-pencil me-2"></i>Редактирование обращения #@Model.Id
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditRequest" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Категория</label>
+                                <select id="categoryId" class="form-select" required>
+                                    <option value="">-- Выберите категорию --</option>
+                                    @foreach (var cat in ViewBag.Categories as IEnumerable<HelpAsk.Models.Category>)
+                                    {
+                                        <option value="@cat.Id" selected="@(cat.Id == ViewBag.SelectedCategoryId)">@cat.Title</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Подкатегория</label>
+                                <select id="subcategoryId" class="form-select" required>
+                                    <option value="">-- Выберите подкатегорию --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Услуга</label>
+                                <select name="serviceId" id="serviceId" class="form-select" required>
+                                    <option value="">-- Выберите услугу --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Оборудование (необязательно)</label>
+                                <select name="equipmentId" class="form-select">
+                                    <option value="">-- Не выбрано --</option>
+                                    @foreach (var eq in ViewBag.Equipment as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
+                                    {
+                                        <option value="@eq.Value" selected="@(eq.Value == ViewBag.SelectedEquipmentId?.ToString())">@eq.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Срочность</label>
+                                <select name="urgencyId" class="form-select" required>
+                                    <option value="">-- Выберите срочность --</option>
+                                    @foreach (var u in ViewBag.Urgencies as IEnumerable<HelpAsk.Models.UrgencyLevel>)
+                                    {
+                                        <option value="@u.Id" selected="@(u.Id == Model.UrgencyId)">@u.Title</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Тема</label>
+                                <input name="subject" class="form-control" value="@Model.Subject" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Описание</label>
+                                <textarea name="description" class="form-control" rows="4" required>@Model.Description</textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="/Employee/MyRequests" class="btn btn-secondary me-2">
+                                <i class="bi bi-arrow-left me-1"></i>Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    var selectedSubcategoryId = @(ViewBag.SelectedSubcategoryId ?? 0);
+    var selectedServiceId = @(Model.ServiceId);
+
+    document.getElementById('categoryId').addEventListener('change', function() {
+        var subSelect = document.getElementById('subcategoryId');
+        var servSelect = document.getElementById('serviceId');
+        subSelect.innerHTML = '<option value="">-- Выберите подкатегорию --</option>';
+        servSelect.innerHTML = '<option value="">-- Сначала выберите подкатегорию --</option>';
+
+        if (this.value) {
+            fetch('/Employee/GetSubcategories?categoryId=' + this.value)
+                .then(r => r.json())
+                .then(data => {
+                    data.forEach(s => {
+                        var opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.title;
+                        if (s.id === selectedSubcategoryId) opt.selected = true;
+                        subSelect.appendChild(opt);
+                    });
+                    if (selectedSubcategoryId) {
+                        var event = new Event('change');
+                        subSelect.dispatchEvent(event);
+                    }
+                });
+        }
+    });
+
+    document.getElementById('subcategoryId').addEventListener('change', function() {
+        var servSelect = document.getElementById('serviceId');
+        servSelect.innerHTML = '<option value="">-- Выберите услугу --</option>';
+
+        if (this.value) {
+            fetch('/Employee/GetServices?subcategoryId=' + this.value)
+                .then(r => r.json())
+                .then(data => {
+                    data.forEach(s => {
+                        var opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.title;
+                        if (s.id === selectedServiceId) opt.selected = true;
+                        servSelect.appendChild(opt);
+                    });
+                });
+        }
+    });
+
+    if (selectedSubcategoryId) {
+        var event = new Event('change');
+        document.getElementById('categoryId').dispatchEvent(event);
+    }
+</script>
+}
