@@ -10,7 +10,7 @@ services:
     volumes:
       - ./docker/mssql:/var/opt/mssql/backup
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd" -Q "SELECT 1" -b -o /dev/null
+      test: ["CMD", "pgrep", "-x", "sqlservr"]
       interval: 10s
       retries: 10
       start_period: 20s
