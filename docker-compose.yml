@@ -20,7 +20,7 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
-    entrypoint: >
+    entrypoint: |
       bash -c "
       for i in {1..30}; do
         /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong!Passw0rd' -C -d master -i /scripts/restore.sql && exit 0
