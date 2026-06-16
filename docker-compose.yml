@@ -16,7 +16,7 @@ services:
       start_period: 30s
 
   init-db:
-    image: mcr.microsoft.com/mssql-tools18
+    image: mcr.microsoft.com/mssql/server:2022-latest
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -24,11 +24,12 @@ services:
       bash -c "
       for i in {1..30}; do
         /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong!Passw0rd' -C -d master -i /scripts/restore.sql && exit 0
-        echo \"Attempt $i failed, retrying in 2s...\"
         sleep 2
       done
       exit 1
       "
+    environment:
+      ACCEPT_EULA: "Y"
     volumes:
       - ./docker/mssql/restore.sql:/scripts/restore.sql
 
