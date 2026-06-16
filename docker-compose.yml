@@ -10,19 +10,24 @@ services:
     volumes:
       - ./docker/mssql:/var/opt/mssql/backup
     healthcheck:
-      test: ["CMD", "pgrep", "-x", "sqlservr"]
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -C -Q "SELECT 1" -b -o /dev/null
       interval: 10s
       retries: 10
-      start_period: 20s
+      start_period: 30s
 
   init-db:
-    image: mcr.microsoft.com/mssql-tools
+    image: mcr.microsoft.com/mssql-tools18
     depends_on:
       sqlserver:
         condition: service_healthy
     entrypoint: >
       bash -c "
-      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong!Passw0rd' -d master -i /scripts/restore.sql
+      for i in {1..30}; do
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong!Passw0rd' -C -d master -i /scripts/restore.sql && exit 0
+        echo \"Attempt $i failed, retrying in 2s...\"
+        sleep 2
+      done
+      exit 1
       "
     volumes:
       - ./docker/mssql/restore.sql:/scripts/restore.sql
