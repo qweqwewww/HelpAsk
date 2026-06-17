@@ -1,0 +1,259 @@
+@model List<HelpAsk.Models.Request>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Все обращения";
+    var completedStatusId = ViewBag.CompletedStatusId;
+    var pendingStatusId = ViewBag.PendingStatusId;
+}
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/Employee"><i class="bi bi-question-circle me-2"></i>HelpAsk</a>
+        <div class="d-flex align-items-center">
+            <span class="text-white me-3">
+                <i class="bi bi-person-circle me-1"></i>
+                @Context.User.Identity?.Name
+            </span>
+            <a href="/Account/Logout" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Выйти
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="bi bi-eye me-2"></i>Все обращения</h4>
+        <div>
+            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#reportModal">
+                <i class="bi bi-file-earmark-excel me-1"></i>Сформировать отчёт
+            </button>
+            <a href="/Employee" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>На главную
+            </a>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <form method="get" class="row g-2">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Поиск по фамилии, теме или услуге..." value="@Context.Request.Query["search"]" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Найти</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Тема</th>
+                    <th>Создатель</th>
+                    <th>Кабинет</th>
+                    <th>Услуга</th>
+                    <th>Оборудование</th>
+                    <th>Статус</th>
+                    <th>Срочность</th>
+                    <th>Дата создания</th>
+                    <th>Оценка</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@(item.StatusId == completedStatusId ? "table-success" : "")">
+                            <td>@item.Id</td>
+                            <td>@item.Subject</td>
+                            <td>@item.Employee.LastName @item.Employee.FirstName</td>
+                            <td>@(item.Employee.Department?.Cabinet ?? "—")</td>
+                            <td>@item.Service.Title</td>
+                            <td>@(item.Equipment != null ? $"{item.Equipment.EquipmentType.Title} {item.Equipment.EquipmentModel.Title} ({item.Equipment.EquipmentModel.Manufacturer.Title})" : "—")</td>
+                            <td>
+                                @if (item.Status.Title == "Выполнено")
+                                {
+                                    <span class="badge bg-success">Выполнено</span>
+                                }
+                                else if (item.Status.Title == "В ожидании")
+                                {
+                                    <span class="badge bg-warning">В ожидании</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Status.Title</span>
+                                }
+                            </td>
+                            <td>@item.Urgency.Title</td>
+                            <td>@item.CreationDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@(item.Rating?.Title ?? "—")</td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    @if (item.StatusId == pendingStatusId)
+                                    {
+                                        <a href="/Employee/Chat/@item.Id" class="btn btn-sm btn-outline-primary" title="Чат">
+                                            <i class="bi bi-chat-dots"></i>
+                                        </a>
+                                        <form asp-action="CompleteRequest" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-check-lg"></i> Выполнить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">Обращения не найдены</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/Employee/GenerateReport" method="get" target="_blank">
+                <div class="modal-header">
+                    <h5 class="modal-title">Сформировать отчёт по обращениям</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Тип отчёта</label>
+                        <select name="filter" class="form-select" id="reportFilter">
+                            <option value="all">Все обращения</option>
+                            <option value="completed">Только выполненные</option>
+                            <option value="pending">Только в ожидании</option>
+                            <option value="bySubject">По теме обращения</option>
+                            <option value="byCreator">По создателю</option>
+                            <option value="byExecutor">По исполнителю</option>
+                            <option value="byService">По услуге</option>
+                            <option value="byDate">За текущий день (по дате создания)</option>
+                            <option value="byExecDate">За текущий день (по дате выполнения)</option>
+                            <option value="byDateRange">По диапазону дат создания</option>
+                            <option value="byExecDateRange">По диапазону дат выполнения</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 filter-field" id="subjectField" style="display:none">
+                        <label class="form-label">Тема обращения</label>
+                        <input type="text" name="subject" class="form-control" placeholder="Введите тему..." />
+                    </div>
+                    <div class="mb-3 filter-field" id="creatorField" style="display:none">
+                        <label class="form-label">Создатель</label>
+                        <select name="creatorId" class="form-select">
+                            <option value="">Выберите сотрудника</option>
+                            @if (ViewBag.CreatorEmployees != null)
+                            {
+                                @foreach (var emp in ViewBag.CreatorEmployees)
+                                {
+                                    <option value="@emp.Id">@emp.LastName @emp.FirstName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3 filter-field" id="executorField" style="display:none">
+                        <label class="form-label">Исполнитель</label>
+                        <select name="executorId" class="form-select">
+                            <option value="">Выберите сотрудника</option>
+                            @if (ViewBag.ExecutorEmployees != null)
+                            {
+                                @foreach (var emp in ViewBag.ExecutorEmployees)
+                                {
+                                    <option value="@emp.Id">@emp.LastName @emp.FirstName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3 filter-field" id="serviceField" style="display:none">
+                        <label class="form-label">Услуга</label>
+                        <select name="serviceId" class="form-select">
+                            <option value="">Выберите услугу</option>
+                            @if (ViewBag.Services != null)
+                            {
+                                @foreach (var svc in ViewBag.Services)
+                                {
+                                    <option value="@svc.Id">@svc.Title</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3 filter-field" id="dateField" style="display:none">
+                        <label class="form-label">Дата создания (конкретный день)</label>
+                        <input type="date" name="date" class="form-control" />
+                    </div>
+                    <div class="mb-3 filter-field" id="execDateField" style="display:none">
+                        <label class="form-label">Дата выполнения (конкретный день)</label>
+                        <input type="date" name="execDate" class="form-control" />
+                    </div>
+                    <div class="mb-3 filter-field" id="dateRangeField" style="display:none">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Дата создания с</label>
+                                <input type="date" name="dateFrom" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">по</label>
+                                <input type="date" name="dateTo" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3 filter-field" id="execDateRangeField" style="display:none">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Дата выполнения с</label>
+                                <input type="date" name="execDateFrom" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">по</label>
+                                <input type="date" name="execDateTo" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Скачать Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('reportFilter')?.addEventListener('change', function() {
+        document.querySelectorAll('.filter-field').forEach(function(el) {
+            el.style.display = 'none';
+        });
+        var map = {
+            bySubject: 'subjectField',
+            byCreator: 'creatorField',
+            byExecutor: 'executorField',
+            byService: 'serviceField',
+            byDate: 'dateField',
+            byExecDate: 'execDateField',
+            byDateRange: 'dateRangeField',
+            byExecDateRange: 'execDateRangeField'
+        };
+        var target = map[this.value];
+        if (target) {
+            document.getElementById(target).style.display = '';
+        }
+    });
+</script>

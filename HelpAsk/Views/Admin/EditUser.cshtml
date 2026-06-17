@@ -1,0 +1,86 @@
+@model HelpAsk.Models.User
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Редактировать пользователя";
+}
+
+<h4 class="mb-4"><i class="bi bi-pencil-square me-2"></i>Редактирование пользователя</h4>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @ViewData.ModelState[string.Empty]?.Errors[0].ErrorMessage
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="EditUser" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Фамилия</label>
+                    <input name="lastName" class="form-control" value="@Model.Employee.LastName" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Имя</label>
+                    <input name="firstName" class="form-control" value="@Model.Employee.FirstName" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Отчество</label>
+                    <input name="middleName" class="form-control" value="@Model.Employee.MiddleName" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Телефон</label>
+                    <input name="phone" type="tel" class="form-control" value="@Model.Employee.Phone" placeholder="+375 (XX) XXX-XX-XX" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Должность</label>
+                    <select name="positionId" class="form-select" required>
+                        @if (ViewBag.Positions != null)
+                        {
+                            @foreach (var p in ViewBag.Positions)
+                            {
+                                <option value="@p.Value" selected="@(p.Value == Model.Employee.PositionId.ToString())">@p.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Отдел</label>
+                    <select name="departmentId" class="form-select" required>
+                        @if (ViewBag.Departments != null)
+                        {
+                            @foreach (var d in ViewBag.Departments)
+                            {
+                                <option value="@d.Value" selected="@(d.Value == Model.Employee.DepartmentId.ToString())">@d.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Логин</label>
+                    <input name="login" class="form-control" value="@Model.Login" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Новый пароль (оставьте пустым, если не менять)</label>
+                    <input name="password" type="password" class="form-control" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isAdmin" id="isAdmin" value="true" @(Model.IsAdmin ? "checked" : "") />
+                        <label class="form-check-label" for="isAdmin">Администратор</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a asp-action="Index" class="btn btn-secondary me-2">
+                    <i class="bi bi-arrow-left me-1"></i>Назад
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Сохранить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

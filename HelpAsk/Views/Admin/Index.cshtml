@@ -1,0 +1,87 @@
+@model List<HelpAsk.Models.User>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Пользователи";
+    var currentUserId = ViewBag.CurrentUserId;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-people me-2"></i>Управление пользователями</h4>
+    <a asp-action="CreateEmployee" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i>Добавить сотрудника
+    </a>
+</div>
+
+<div class="search-box">
+    <form asp-action="Index" method="get" class="row g-2">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Поиск по имени или логину..." value="@Context.Request.Query["search"]" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">Найти</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Логин</th>
+                <th>ФИО</th>
+                <th>Должность</th>
+                <th>Отдел</th>
+                <th>Роль</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                @foreach (var user in Model)
+                {
+                    var isCurrentUser = user.Id == currentUserId;
+                    <tr class="@(isCurrentUser ? "table-success" : "")">
+                        <td><strong>@user.Login</strong> @(isCurrentUser ? "(Вы)" : "")</td>
+                        <td>@user.Employee.LastName @user.Employee.FirstName @user.Employee.MiddleName</td>
+                        <td>@user.Employee.Position.Title</td>
+                        <td>@user.Employee.Department.Title</td>
+                        <td>
+                            @if (user.IsAdmin)
+                            {
+                                <span class="badge bg-danger">Администратор</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Сотрудник</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-sm btn-warning me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            @if (!isCurrentUser)
+                            {
+                                <form asp-action="DeleteEmployee" method="post" class="d-inline" onsubmit="return confirm('Вы уверены, что хотите удалить этого сотрудника?');">
+                                    <input type="hidden" name="id" value="@user.EmployeeId" />
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Пользователи не найдены</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

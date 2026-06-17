@@ -1,0 +1,73 @@
+@model HelpAsk.Models.Request
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Редактировать обращение";
+}
+
+<h4 class="mb-4"><i class="bi bi-pencil-square me-2"></i>Редактирование обращения #@Model.Id</h4>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="EditRequest" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Тема</label>
+                    <input name="subject" class="form-control" value="@Model.Subject" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Статус</label>
+                    <select name="statusId" class="form-select" required>
+                        @if (ViewBag.Statuses != null)
+                        {
+                            @foreach (var s in ViewBag.Statuses)
+                            {
+                                <option value="@s.Value" selected="@(s.Value == Model.StatusId.ToString())">@s.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Срочность</label>
+                    <select name="urgencyId" class="form-select" required>
+                        @if (ViewBag.Urgencies != null)
+                        {
+                            @foreach (var u in ViewBag.Urgencies)
+                            {
+                                <option value="@u.Value" selected="@(u.Value == Model.UrgencyId.ToString())">@u.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Описание</label>
+                    <textarea name="description" class="form-control" rows="4" required>@Model.Description</textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Создатель</label>
+                    <input class="form-control" value="@Model.Employee.LastName @Model.Employee.FirstName" disabled />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Услуга</label>
+                    <input class="form-control" value="@Model.Service.Title" disabled />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Оборудование</label>
+                    <input class="form-control" value="@(Model.Equipment != null ? $"{Model.Equipment.EquipmentType.Title} {Model.Equipment.EquipmentModel.Title} ({Model.Equipment.EquipmentModel.Manufacturer.Title})" : "—")" disabled />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Дата создания</label>
+                    <input class="form-control" value="@Model.CreationDate.ToString("dd.MM.yyyy HH:mm")" disabled />
+                </div>
+            </div>
+            <div class="mt-4">
+                <a asp-action="Requests" class="btn btn-secondary me-2">
+                    <i class="bi bi-arrow-left me-1"></i>Назад
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Сохранить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

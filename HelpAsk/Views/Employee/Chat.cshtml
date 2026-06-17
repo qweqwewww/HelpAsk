@@ -1,0 +1,82 @@
+@model List<HelpAsk.Models.Message>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Чат по обращению";
+    var request = ViewBag.Request as HelpAsk.Models.Request;
+    var isIt = ViewBag.IsItDepartment as bool? ?? false;
+    var employeeId = int.Parse(Context.User.FindFirst("EmployeeId")?.Value ?? "0");
+    var isPending = request?.Status?.Title == "В ожидании";
+}
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/Employee"><i class="bi bi-question-circle me-2"></i>HelpAsk</a>
+        <div class="d-flex align-items-center">
+            <span class="text-white me-3">
+                <i class="bi bi-person-circle me-1"></i>
+                @Context.User.Identity?.Name
+            </span>
+            <a href="/Account/Logout" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Выйти
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-chat-dots me-2"></i>Чат по обращению #@request.Id
+                <small class="text-muted ms-2">@request.Subject</small>
+            </div>
+            <a href="@(isIt ? "/Employee/AllRequests" : "/Employee/MyRequests")" class="btn btn-sm btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад
+            </a>
+        </div>
+        <div class="card-body" style="max-height: 60vh; overflow-y: auto;" id="chatBody">
+            @if (Model.Any())
+            {
+                foreach (var msg in Model)
+                {
+                    var isMine = msg.SenderId == employeeId;
+                    <div class="d-flex @(isMine ? "justify-content-end" : "justify-content-start") mb-3">
+                        <div class="chat-bubble @(isMine ? "chat-mine" : "chat-other")" style="max-width: 75%; padding: 10px 14px; border-radius: 12px; @(isMine ? "background-color: #d4edda; border-bottom-right-radius: 4px;" : "background-color: #e9ecef; border-bottom-left-radius: 4px;")">
+                            <div class="fw-semibold small mb-1">@msg.Sender.LastName @msg.Sender.FirstName</div>
+                            <div class="mb-1">@msg.Text</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">@msg.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">Сообщений пока нет</div>
+            }
+        </div>
+        @if (isPending)
+        {
+            <div class="card-footer">
+                <form asp-action="SendMessage" method="post" class="d-flex gap-2">
+                    <input type="hidden" name="requestId" value="@request.Id" />
+                    <input type="text" name="text" class="form-control" placeholder="Введите сообщение..." required autocomplete="off" />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>Отправить
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="card-footer text-center text-muted">
+                Обращение закрыто. Отправка сообщений недоступна.
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .chat-bubble {
+        word-break: break-word;
+    }
+</style>

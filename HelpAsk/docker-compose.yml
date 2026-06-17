@@ -1,0 +1,42 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./docker/mssql:/var/opt/mssql/backup
+      - sqldata:/var/opt/mssql/data
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd" -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      retries: 10
+      start_period: 20s
+
+  init-db:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    entrypoint: >
+      bash -c "
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P 'YourStrong!Passw0rd' -d master -i /scripts/restore.sql
+      "
+    volumes:
+      - ./docker/mssql/restore.sql:/scripts/restore.sql
+
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AutoAsk;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+
+volumes:
+  sqldata:

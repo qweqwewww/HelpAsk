@@ -1,0 +1,52 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Главная";
+    var employee = ViewBag.Employee as HelpAsk.Models.Employee;
+}
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/Home"><i class="bi bi-question-circle me-2"></i>HelpAsk</a>
+        <div class="d-flex align-items-center">
+            <span class="text-white me-3">
+                <i class="bi bi-person-circle me-1"></i>
+                @Context.User.Identity?.Name
+            </span>
+            <a href="/Account/Logout" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Выйти
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-person-badge me-2"></i>Информация о сотруднике
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">ФИО</label>
+                            <p class="fw-bold mb-0">@(employee?.LastName) @(employee?.FirstName) @(employee?.MiddleName)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Должность</label>
+                            <p class="fw-bold mb-0">@employee?.Position?.Title</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Отдел</label>
+                            <p class="fw-bold mb-0">@employee?.Department?.Title</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">Телефон</label>
+                            <p class="fw-bold mb-0">@(employee?.Phone ?? "Не указан")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

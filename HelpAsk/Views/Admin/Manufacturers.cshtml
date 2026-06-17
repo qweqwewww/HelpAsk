@@ -1,0 +1,120 @@
+@model List<HelpAsk.Models.Manufacturer>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Производители";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-industry me-2"></i>Производители</h4>
+</div>
+
+<div class="search-box">
+    <form asp-action="Manufacturers" method="get" class="row g-2">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Поиск..." value="@Context.Request.Query["search"]" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">Найти</button>
+        </div>
+    </form>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Добавить производителя</div>
+    <div class="card-body">
+        <form asp-action="CreateManufacturer" method="post" class="row g-2">
+            <div class="col-md-5">
+                <input type="text" name="title" class="form-control" placeholder="Название производителя" required />
+            </div>
+            <div class="col-md-5">
+                <select name="countryId" class="form-select" required>
+                    <option value="">-- Выберите страну --</option>
+                    @foreach (var country in ViewBag.Countries ?? Enumerable.Empty<HelpAsk.Models.Country>())
+                    {
+                        <option value="@country.Id">@country.Title</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-lg me-1"></i>Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Страна</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Title</td>
+                <td>@item.Country.Title</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1 btn-edit"
+                            data-id="@item.Id"
+                            data-title="@item.Title"
+                            data-countryid="@item.CountryId">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form asp-action="DeleteManufacturer" method="post" class="d-inline" onsubmit="return confirm('Удалить?');">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EditManufacturer" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editId" />
+                    <input type="text" name="title" id="editTitle" class="form-control mb-2" required />
+                    <select name="countryId" id="editCountryId" class="form-select">
+                        <option value="">-- Выберите страну --</option>
+                        @foreach (var country in ViewBag.Countries ?? Enumerable.Empty<HelpAsk.Models.Country>())
+                        {
+                            <option value="@country.Id">@country.Title</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('editId').value = this.dataset.id;
+            document.getElementById('editTitle').value = this.dataset.title;
+            document.getElementById('editCountryId').value = this.dataset.countryid;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        });
+    });
+</script>
+}
